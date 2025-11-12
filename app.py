@@ -244,6 +244,12 @@ def ensure_session_state():
     st.session_state.setdefault("active_session", None)
 
 
+def rows_to_df(rows: List[sqlite3.Row]) -> pd.DataFrame:
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame([dict(row) for row in rows])
+
+
 def library_tab():
     st.subheader("Library")
     books = fetch_books()
@@ -251,7 +257,7 @@ def library_tab():
         st.info("No books yet. Add one from the Add Book tab.")
         return
 
-    df = pd.DataFrame(books)
+    df = rows_to_df(books)
     shelf_counts = df["shelf"].value_counts().reindex(SHELVES, fill_value=0)
     cols = st.columns(len(SHELVES))
     for col, shelf in zip(cols, SHELVES):
@@ -334,7 +340,7 @@ def session_tab():
     st.caption("Recent sessions")
     sessions = fetch_sessions(limit=10)
     if sessions:
-        session_df = pd.DataFrame(sessions)
+        session_df = rows_to_df(sessions)
         session_df["duration_min"] = (
             pd.to_datetime(session_df["end_ts"]) - pd.to_datetime(session_df["start_ts"])
         ).dt.total_seconds() / 60
@@ -352,7 +358,7 @@ def stats_tab():
     sessions = fetch_sessions()
     total_books = len(books)
     reading = len([b for b in books if b["shelf"] == "reading"])
-    df_sessions = pd.DataFrame(sessions)
+    df_sessions = rows_to_df(sessions)
 
     total_hours = 0.0
     total_pages = 0
@@ -395,7 +401,7 @@ def goals_tab():
     total_minutes_today = 0
     today = pd.Timestamp.utcnow().date()
     if sessions:
-        df = pd.DataFrame(sessions)
+        df = rows_to_df(sessions)
         df["start_ts"] = pd.to_datetime(df["start_ts"])
         today_sessions = df[df["start_ts"].dt.date == today]
         total_minutes_today = (
@@ -422,8 +428,8 @@ def goals_tab():
 def settings_tab():
     st.subheader("Settings & Data")
     st.write(f"Database path: `{DB_PATH}`")
-    books = pd.DataFrame(fetch_books())
-    sessions = pd.DataFrame(fetch_sessions())
+    books = rows_to_df(fetch_books())
+    sessions = rows_to_df(fetch_sessions())
 
     if not books.empty:
         st.download_button(
