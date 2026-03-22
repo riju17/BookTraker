@@ -18,12 +18,38 @@ The app creates `book_tracker.db` in the project root on first launch. Seed book
 | --- | --- | --- |
 | `BOOK_TRACKER_DB` | `<repo>/book_tracker.db` | Path to the SQLite database file. Point to persistent storage when deploying. |
 | `SEED_SAMPLE_DATA` | `1` | Set to `0` to skip inserting sample books/sessions/goals. Recommended for production. |
+| `ADMIN_EMAIL` | `admin@book.local` | Bootstrap admin account email created on first launch. |
+| `ADMIN_PASSWORD` | `admin1234` | Bootstrap admin account password created on first launch. Change this in production. |
+| `SELF_SIGNUP_ENABLED` | `0` | Set to `1` to show self-signup on the login page. |
+| `SIGNUP_INVITE_CODE` | `` | Optional invite code required for self-signup when set. |
+| `SIGNUP_EMAIL_ALLOWLIST` | `` | Optional comma-separated email allowlist for self-signup. |
 
 Example:
 
 ```bash
 BOOK_TRACKER_DB=/data/book_tracker.db SEED_SAMPLE_DATA=0 streamlit run app.py
 ```
+
+With custom admin credentials:
+
+```bash
+BOOK_TRACKER_DB=/data/book_tracker.db \
+SEED_SAMPLE_DATA=0 \
+ADMIN_EMAIL=admin@example.com \
+ADMIN_PASSWORD='strong-password' \
+streamlit run app.py
+```
+
+Self-signup with guardrails:
+
+```bash
+SELF_SIGNUP_ENABLED=1 \
+SIGNUP_INVITE_CODE='team-invite-2026' \
+SIGNUP_EMAIL_ALLOWLIST='alice@example.com,bob@example.com' \
+streamlit run app.py
+```
+
+If both `SIGNUP_INVITE_CODE` and `SIGNUP_EMAIL_ALLOWLIST` are set, both checks are enforced.
 
 ## Deployment Notes
 
@@ -54,6 +80,29 @@ web: streamlit run app.py --server.address=0.0.0.0 --server.port=${PORT:-8501}
 ## Export/Import
 
 The Settings tab lets you export CSV snapshots of books/sessions and import them later. Use this to seed production data once you have live records.
+
+## Admin User Details
+
+Admins can view a full user-details view from the `Admin` tab, including:
+- account metadata (`id`, `email`, role, status, created/last-login timestamps, creator email)
+- reading aggregates (books, sessions, finished books, pages, hours)
+- recent books and sessions for the selected user
+
+## Session Notes
+
+When logging a reading session, you can optionally capture quote details:
+- quote page number
+- line reference (for example, `Line 4-6`)
+- quote text
+- multiple quotes in the same session using `Add quote` before `Stop & log session`
+
+## Reading Progress
+
+Each session updates book progress automatically:
+- `pages_read` in a session is added to the book's current progress
+- library view shows `current_page`, `pages_left`, and `progress_pct`
+- when starting the next session for a book, the app shows the next start page based on where you left off
+- session form supports `Start page` and `End page`; pages read is auto-calculated
 
 ## Tests
 
